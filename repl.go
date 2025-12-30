@@ -1,25 +1,43 @@
-// by convention, we name our package the same as the directory
-package msf_pokedex
+package main
 
-import "strings"
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+	//"io"
+	//"net/http"
+	//"bytes"
+	//"encoding/json"
+)
 
-//"fmt"
-//"strings"
-//"io"
-//"net/http"
-//"bytes"
-//"encoding/json"
+func startRepl() {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for {
+		fmt.Print("Pokedex >")
+		scanner.Scan()
+
+		userInput := scanner.Text()
+
+		words := cleanInput(userInput)
+
+		if len(words) == 0 {
+			continue
+		}
+
+		firstWord := words[0]
+		outputString := fmt.Sprintf("Your command was: %s\n", firstWord)
+		fmt.Print(outputString)
+
+	}
+}
 
 func cleanInput(text string) []string {
 	var sliceStrings []string
 
-	if len(text) > 0 {
-		//cleanedString := strings.TrimSpace(text)
-		//cleanedString = strings.ToLower(cleanedString)
-		//itemsToAdd := strings.Split(cleanedString, " ")
-		//sliceStrings = append(sliceStrings, itemsToAdd...)
-		sliceStrings = strings.Fields(text)
-	}
+	loweredString := strings.ToLower(text)
+	sliceStrings = strings.Fields(loweredString)
 
 	return sliceStrings
 }

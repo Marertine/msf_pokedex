@@ -1,4 +1,4 @@
-package msf_pokedex
+package main
 
 import (
 	//"strings"

@@ -1,8 +1,5 @@
-// package main
-package msf_pokedex
-
-import "fmt"
+package main
 
 func main() {
-	fmt.Println("Hello, World!")
+	startRepl()
 }
