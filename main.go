@@ -1,4 +1,5 @@
-package main
+// package main
+package msf_pokedex
 
 import "fmt"
 
