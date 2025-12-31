@@ -11,28 +11,8 @@ import (
 	//"encoding/json"
 )
 
-type cliCommand struct {
-	name        string
-	description string
-	callback    func() error
-}
-
-func getCommands() map[string]cliCommand {
-	return map[string]cliCommand{
-		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
-		},
-		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback:    commandHelp,
-		},
-	}
-}
-
 func startRepl() {
+	cfg := &pokeConfig{}
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -50,8 +30,10 @@ func startRepl() {
 		firstWord := words[0]
 
 		mapCommands := getCommands()
-		if value, found := mapCommands[firstWord]; found {
-			value.callback()
+		if cmd, found := mapCommands[firstWord]; found {
+			if err := cmd.callback(cfg); err != nil {
+				fmt.Println("Error:", err)
+			}
 		} else {
 			//outputString := fmt.Sprintf("Your text was: %s\n", firstWord)
 			fmt.Print("Unknown command\n")
@@ -67,22 +49,4 @@ func cleanInput(text string) []string {
 	sliceStrings = strings.Fields(loweredString)
 
 	return sliceStrings
-}
-
-func commandExit() error {
-	fmt.Print("Closing the Pokedex... Goodbye!\n")
-	os.Exit(0)
-	return nil
-}
-
-func commandHelp() error {
-	mapCommands := getCommands()
-	fmt.Print("Welcome to the Pokedex!\n")
-	fmt.Print("Usage:\n\n")
-
-	for _, commandItem := range mapCommands {
-		fmt.Printf("%s: %s\n", commandItem.name, commandItem.description)
-	}
-
-	return nil
 }
