@@ -39,6 +39,11 @@ func getCommands() map[string]cliCommand {
 			description: "Display 20 locations at a time",
 			callback:    commandMap,
 		},
+		"mapb": {
+			name:        "mapb",
+			description: "Go to previous page of 20 locations",
+			callback:    commandMapB,
+		},
 	}
 }
 
@@ -61,6 +66,65 @@ func commandHelp(cfg *pokeConfig) error {
 }
 
 func commandMap(cfg *pokeConfig) error {
-	fmt.Print("FFS\n")
+	var pageURL *string
+	if cfg.nextURL != "" {
+		pageURL = &cfg.nextURL
+	}
+
+	resp, err := pokeClient.ListLocations(pageURL)
+	//resp, err := pokeClient.ListLocations(nil)
+	if err != nil {
+		return err
+	}
+
+	for _, loc := range resp.Results {
+		fmt.Println(loc.Name)
+	}
+
+	if resp.Next != nil {
+		cfg.nextURL = *resp.Next
+	} else {
+		cfg.nextURL = ""
+	}
+
+	if resp.Previous != nil {
+		cfg.prevURL = *resp.Previous
+	} else {
+		cfg.prevURL = ""
+	}
+
+	return nil
+}
+
+func commandMapB(cfg *pokeConfig) error {
+	var pageURL *string
+	if cfg.prevURL == "" {
+		fmt.Println("you're on the first page")
+		return nil
+	}
+
+	pageURL = &cfg.prevURL
+	resp, err := pokeClient.ListLocations(pageURL)
+	//resp, err := pokeClient.ListLocations(nil)
+	if err != nil {
+		return err
+	}
+
+	for _, loc := range resp.Results {
+		fmt.Println(loc.Name)
+	}
+
+	if resp.Next != nil {
+		cfg.nextURL = *resp.Next
+	} else {
+		cfg.nextURL = ""
+	}
+
+	if resp.Previous != nil {
+		cfg.prevURL = *resp.Previous
+	} else {
+		cfg.prevURL = ""
+	}
+
 	return nil
 }
