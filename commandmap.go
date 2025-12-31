@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/msf_pokedex/internal/pokeapi"
+	"github.com/Marertine/msf_pokedex/internal/pokeapi"
 )
 
 type cliCommand struct {
