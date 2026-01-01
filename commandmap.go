@@ -63,6 +63,11 @@ func getCommands() map[string]cliCommand {
 			description: "Go to previous page of 20 locations",
 			callback:    commandMapB,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Show Pokedex entries",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -201,6 +206,7 @@ func commandCatch(cfg *config, args ...string) error {
 
 	if rand.Intn(100) < intCatchChance {
 		fmt.Printf("%s was caught!\n", pokemon.Name)
+		fmt.Println("You may now inspect it with the inspect command.")
 		cfg.caughtPokemon[pokemon.Name] = pokemon
 	} else {
 		fmt.Printf("%s escaped!\n", pokemon.Name)
@@ -230,6 +236,14 @@ func commandInspect(cfg *config, args ...string) error {
 	fmt.Println("Types:")
 	for _, typeInfo := range pokemon.Types {
 		fmt.Println("  -", typeInfo.Type.Name)
+	}
+	return nil
+}
+
+func commandPokedex(cfg *config, args ...string) error {
+	fmt.Println("Your Pokedex:")
+	for _, p := range cfg.caughtPokemon {
+		fmt.Printf(" - %s\n", p.Name)
 	}
 	return nil
 }
