@@ -5,36 +5,45 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Marertine/msf_pokedex/internal/pokeapi"
 )
 
-func startRepl() {
-	cfg := &pokeConfig{}
+type config struct {
+	pokeapiClient pokeapi.Client
+	nextURL       string
+	prevURL       string
+	caughtPokemon map[string]pokeapi.Pokemon
+}
+
+func startRepl(cfg *config) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Print("Pokedex >")
+		fmt.Print("Pokedex > ")
 		scanner.Scan()
 
-		userInput := scanner.Text()
-
-		words := cleanInput(userInput)
-
+		words := cleanInput(scanner.Text())
 		if len(words) == 0 {
 			continue
 		}
 
-		firstWord := words[0]
-
-		mapCommands := getCommands(words)
-		if cmd, found := mapCommands[firstWord]; found {
-			if err := cmd.callback(cfg, words); err != nil {
-				fmt.Println("Error:", err)
-			}
-		} else {
-			//outputString := fmt.Sprintf("Your text was: %s\n", firstWord)
-			fmt.Print("Unknown command\n")
+		commandName := words[0]
+		args := []string{}
+		if len(words) > 1 {
+			args = words[1:]
 		}
 
+		commands := getCommands()
+		cmd, found := commands[commandName]
+		if !found {
+			fmt.Println("Unknown command")
+			continue
+		}
+
+		if err := cmd.callback(cfg, args...); err != nil {
+			fmt.Println("Error:", err)
+		}
 	}
 }
 

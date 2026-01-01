@@ -5,26 +5,29 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"time"
 
 	"github.com/Marertine/msf_pokedex/internal/pokeapi"
+	//"time"
+	//"github.com/Marertine/msf_pokedex/internal/pokeapi"
 )
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*pokeConfig, []string) error
+	callback    func(*config, ...string) error
 }
 
 type pokeConfig struct {
-	nextURL string
-	prevURL string
+	pokeapiClient pokeapi.Client
+	nextURL       string
+	prevURL       string
+	caughtPokemon map[string]pokeapi.Pokemon
 }
 
-var pokeClient = pokeapi.NewClient(5 * time.Second)
-var caughtPokemon map[string]pokeapi.Pokemon
+//var pokeClient = pokeapi.NewClient(5 * time.Second)
+//var caughtPokemon map[string]pokeapi.Pokemon
 
-func getCommands(words []string) map[string]cliCommand {
+func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"catch": {
 			name:        "catch",
@@ -59,16 +62,15 @@ func getCommands(words []string) map[string]cliCommand {
 	}
 }
 
-func commandExit(_ *pokeConfig, _ []string) error {
-	// _ indicates that we are intentionally not using these parameters
+func commandExit(cfg *config, args ...string) error {
 	fmt.Print("Closing the Pokedex... Goodbye!\n")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(_ *pokeConfig, words []string) error {
+func commandHelp(cfg *config, args ...string) error {
 	// _ indicates that we are intentionally not using these parameters
-	mapCommands := getCommands(words)
+	mapCommands := getCommands()
 	fmt.Print("Welcome to the Pokedex!\n")
 	fmt.Print("Usage:\n\n")
 
@@ -79,14 +81,13 @@ func commandHelp(_ *pokeConfig, words []string) error {
 	return nil
 }
 
-func commandMap(cfg *pokeConfig, _ []string) error {
-	// _ indicates that we are intentionally not using these parameters
+func commandMap(cfg *config, args ...string) error {
 	var pageURL *string
 	if cfg.nextURL != "" {
 		pageURL = &cfg.nextURL
 	}
 
-	resp, err := pokeClient.ListLocations(pageURL)
+	resp, err := cfg.pokeapiClient.ListLocations(pageURL)
 	if err != nil {
 		return err
 	}
@@ -110,8 +111,7 @@ func commandMap(cfg *pokeConfig, _ []string) error {
 	return nil
 }
 
-func commandMapB(cfg *pokeConfig, _ []string) error {
-	// _ indicates that we are intentionally not using these parameters
+func commandMapB(cfg *config, args ...string) error {
 	var pageURL *string
 	if cfg.prevURL == "" {
 		fmt.Println("you're on the first page")
@@ -119,7 +119,7 @@ func commandMapB(cfg *pokeConfig, _ []string) error {
 	}
 
 	pageURL = &cfg.prevURL
-	resp, err := pokeClient.ListLocations(pageURL)
+	resp, err := cfg.pokeapiClient.ListLocations(pageURL)
 	if err != nil {
 		return err
 	}
@@ -143,19 +143,18 @@ func commandMapB(cfg *pokeConfig, _ []string) error {
 	return nil
 }
 
-func commandExplore(cfg *pokeConfig, words []string) error {
+func commandExplore(cfg *config, args ...string) error {
 	//fmt.Println("DEBUG: explore called with args:", words)
 
-	if len(words) < 2 {
+	if len(args) != 1 {
 		//fmt.Println("DEBUG: wrong number of args")
 		return errors.New("you must provide a location name")
 	}
 
-	// command is words[0], location name is words[1]
-	name := words[1]
+	name := args[0]
 	//fmt.Println("DEBUG: fetching location:", name)
 
-	location, err := pokeClient.GetLocation(name)
+	location, err := cfg.pokeapiClient.GetLocation(name)
 	if err != nil {
 		//fmt.Println("DEBUG: GetLocation error:", err)
 		return err
@@ -172,34 +171,33 @@ func commandExplore(cfg *pokeConfig, words []string) error {
 	return nil
 }
 
-func commandCatch(cfg *pokeConfig, words []string) error {
+func commandCatch(cfg *config, args ...string) error {
 	//fmt.Println("DEBUG: catch called with args:", words)
 
-	if len(words) < 2 {
+	if len(args) != 1 {
 		//fmt.Println("DEBUG: wrong number of args")
 		return errors.New("you must provide a Pokemon name")
 	}
 
-	// command is words[0], pokemon name is words[1]
-	name := words[1]
+	name := args[0]
 	//fmt.Println("DEBUG: catching pokemon:", name)
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", name)
 
-	pokemon, err := pokeClient.GetPokemon(name)
+	pokemon, err := cfg.pokeapiClient.GetPokemon(name)
 	if err != nil {
-		fmt.Println("DEBUG: GetPokemon error:", err)
+		//fmt.Println("DEBUG: GetPokemon error:", err)
 		return err
 	}
 
-	fmt.Println("DEBUG: monster name:", pokemon.Name)
-	fmt.Println("DEBUG: base experience:", pokemon.BaseExperience)
+	//fmt.Println("DEBUG: monster name:", pokemon.Name)
+	//fmt.Println("DEBUG: base experience:", pokemon.BaseExperience)
 
 	intCatchChance := max(min(80-(pokemon.BaseExperience/10), 95), 10)
 
 	if rand.Intn(100) < intCatchChance {
 		fmt.Printf("%s was caught!\n", pokemon.Name)
-		caughtPokemon[pokemon.Name] = pokemon
+		cfg.caughtPokemon[pokemon.Name] = pokemon
 	} else {
 		fmt.Printf("%s escaped!\n", pokemon.Name)
 	}
