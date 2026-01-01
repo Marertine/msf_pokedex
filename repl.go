@@ -29,9 +29,9 @@ func startRepl() {
 
 		firstWord := words[0]
 
-		mapCommands := getCommands()
+		mapCommands := getCommands(words)
 		if cmd, found := mapCommands[firstWord]; found {
-			if err := cmd.callback(cfg); err != nil {
+			if err := cmd.callback(cfg, words); err != nil {
 				fmt.Println("Error:", err)
 			}
 		} else {
