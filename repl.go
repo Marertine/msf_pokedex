@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	//"io"
-	//"net/http"
-	//"bytes"
-	//"encoding/json"
 )
 
 func startRepl() {

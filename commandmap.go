@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"time"
 
@@ -21,18 +22,24 @@ type pokeConfig struct {
 }
 
 var pokeClient = pokeapi.NewClient(5 * time.Second)
+var caughtPokemon map[string]pokeapi.Pokemon
 
 func getCommands(words []string) map[string]cliCommand {
 	return map[string]cliCommand{
-		"explore": {
-			name:        "explore",
-			description: "Show list of Pokemon in a location",
-			callback:    commandExplore,
+		"catch": {
+			name:        "catch",
+			description: "Catch a monster",
+			callback:    commandCatch,
 		},
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
 			callback:    commandExit,
+		},
+		"explore": {
+			name:        "explore",
+			description: "Show list of Pokemon in a location",
+			callback:    commandExplore,
 		},
 		"help": {
 			name:        "help",
@@ -162,5 +169,40 @@ func commandExplore(cfg *pokeConfig, words []string) error {
 	for _, enc := range location.PokemonEncounters {
 		fmt.Printf(" - %s\n", enc.Pokemon.Name)
 	}
+	return nil
+}
+
+func commandCatch(cfg *pokeConfig, words []string) error {
+	//fmt.Println("DEBUG: catch called with args:", words)
+
+	if len(words) < 2 {
+		//fmt.Println("DEBUG: wrong number of args")
+		return errors.New("you must provide a Pokemon name")
+	}
+
+	// command is words[0], pokemon name is words[1]
+	name := words[1]
+	//fmt.Println("DEBUG: catching pokemon:", name)
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", name)
+
+	pokemon, err := pokeClient.GetPokemon(name)
+	if err != nil {
+		fmt.Println("DEBUG: GetPokemon error:", err)
+		return err
+	}
+
+	fmt.Println("DEBUG: monster name:", pokemon.Name)
+	fmt.Println("DEBUG: base experience:", pokemon.BaseExperience)
+
+	intCatchChance := max(min(80-(pokemon.BaseExperience/10), 95), 10)
+
+	if rand.Intn(100) < intCatchChance {
+		fmt.Printf("%s was caught!\n", pokemon.Name)
+		caughtPokemon[pokemon.Name] = pokemon
+	} else {
+		fmt.Printf("%s escaped!\n", pokemon.Name)
+	}
+
 	return nil
 }
